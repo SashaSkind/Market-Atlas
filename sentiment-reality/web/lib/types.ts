@@ -1,18 +1,15 @@
 // Sentiment label as specified in CLAUDE.md
 export type SentimentLabel = 'POSITIVE' | 'NEUTRAL' | 'NEGATIVE'
 
-// Individual news item with sentiment
-export interface NewsItem {
-  id: string
-  title: string
-  source: string
-  published_at: string // ISO date string
-  sentiment_score: number // [-1, +1]
-  sentiment_label: SentimentLabel
-  ticker?: string
+// ========== Price Data ==========
+export interface PricePoint {
+  date: string // YYYY-MM-DD
+  close: number
+  adj_close?: number | null
+  volume?: number | null
 }
 
-// Daily aggregated sentiment
+// ========== Sentiment Data ==========
 export interface DailySentiment {
   date: string // YYYY-MM-DD
   avg_score: number // [-1, +1]
@@ -22,52 +19,60 @@ export interface DailySentiment {
   negative_count: number
 }
 
-// Price data point
-export interface PricePoint {
-  date: string // YYYY-MM-DD
-  open: number
-  high: number
-  low: number
-  close: number
-  volume: number
+// ========== Window Metrics ==========
+export interface WindowMetric {
+  date_end: string // YYYY-MM-DD
+  corr?: number | null // correlation
+  directional_match?: number | null // fraction of days signs match
+  alignment_score?: number | null // composite [-1, +1]
+  misalignment_days?: number | null
+  interpretation?: string | null // 'Aligned' | 'Noisy' | 'Misleading'
 }
 
-// Alignment metric (sentiment vs price movement)
-export interface AlignmentMetric {
+// ========== Dashboard Summaries ==========
+export interface SentimentSummary {
+  current_score?: number | null
+  trend?: 'up' | 'down' | 'stable' | null
+  dominant_label?: SentimentLabel | null
+}
+
+export interface PriceSummary {
+  current_price?: number | null
+  period_return?: number | null
+}
+
+export interface AlignmentSummary {
+  score?: number | null
+  misalignment_days?: number | null
+  interpretation?: string | null
+}
+
+// ========== Daily Data Point (combined) ==========
+export interface DailyDataPoint {
   date: string
-  sentiment_score: number // [-1, +1]
-  price_return: number // percentage
-  aligned: boolean // true if both positive or both negative
-  alignment_score: number // correlation or simple match score
+  price?: PricePoint | null
+  sentiment?: DailySentiment | null
+  metric?: WindowMetric | null
 }
 
-// Dashboard summary response
+// ========== Dashboard Response ==========
 export interface DashboardData {
   ticker: string
-  period: string // e.g., "7d", "30d"
-  sentiment_summary: {
-    current_score: number
-    trend: 'up' | 'down' | 'stable'
-    dominant_label: SentimentLabel
-  }
-  price_summary: {
-    current_price: number
-    period_return: number
-  }
-  alignment: {
-    score: number // [-1, +1]
-    misalignment_days: number
-    interpretation: string
-  }
-  daily_data: Array<{
-    date: string
-    sentiment: DailySentiment
-    price: PricePoint
-    alignment: AlignmentMetric
-  }>
+  period: number
+  sentiment_summary: SentimentSummary
+  price_summary: PriceSummary
+  alignment: AlignmentSummary
+  daily_data: DailyDataPoint[]
 }
 
-// API response wrapper
+// ========== Stock Management ==========
+export interface TaskResponse {
+  queued: boolean
+  task_type: string
+  ticker: string
+}
+
+// ========== API Response Wrapper ==========
 export interface ApiResponse<T> {
   data: T
   success: boolean

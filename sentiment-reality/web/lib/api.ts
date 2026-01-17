@@ -1,12 +1,12 @@
-import type { DashboardData, ApiResponse } from './types'
+import type { DashboardData, TaskResponse, ApiResponse } from './types'
 
 // API base URL - configured via environment variable
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
 
 // Generic fetch wrapper with error handling
-async function fetchApi<T>(endpoint: string): Promise<ApiResponse<T>> {
+async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<ApiResponse<T>> {
   try {
-    const response = await fetch(`${API_BASE}${endpoint}`)
+    const response = await fetch(`${API_BASE}${endpoint}`, options)
 
     if (!response.ok) {
       return {
@@ -27,14 +27,30 @@ async function fetchApi<T>(endpoint: string): Promise<ApiResponse<T>> {
   }
 }
 
-// Dashboard API endpoints
+// Dashboard API
 export const api = {
-  // Get dashboard data for a ticker
-  getDashboard: (ticker: string, period = '7d') =>
-    fetchApi<DashboardData>(`/dashboard/${ticker}?period=${period}`),
-
   // Health check
-  health: () => fetchApi<{ status: string }>('/health'),
+  health: () => fetchApi<{ ok: boolean }>('/health'),
+
+  // Get dashboard data for a ticker
+  getDashboard: (ticker: string, period: number = 90) =>
+    fetchApi<DashboardData>(`/dashboard?ticker=${ticker}&period=${period}`),
+
+  // Add a stock to track (creates BACKFILL_STOCK task)
+  addStock: (ticker: string) =>
+    fetchApi<TaskResponse>('/stocks', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ticker }),
+    }),
+
+  // Refresh a stock (creates REFRESH_STOCK task)
+  refreshStock: (ticker: string) =>
+    fetchApi<TaskResponse>('/stocks/refresh', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ticker }),
+    }),
 }
 
 export default api
