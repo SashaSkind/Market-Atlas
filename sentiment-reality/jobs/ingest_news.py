@@ -2,8 +2,14 @@ import requests
 from datetime import datetime, timedelta, timezone
 from typing import List, Dict, Any
 import os
+from pathlib import Path
+from dotenv import load_dotenv
 from newspaper import Article
 import yfinance as yf
+
+# Load .env from project root (one level up from jobs/)
+env_path = Path(__file__).parent.parent / '.env'
+load_dotenv(env_path)
 
 
 def get_stock_price_data(stock_symbol: str) -> Dict[str, Any]:

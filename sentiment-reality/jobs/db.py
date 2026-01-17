@@ -1,11 +1,14 @@
 """Database helper for jobs - copied from api/db.py for independence."""
 import os
+from pathlib import Path
 import psycopg2
 from psycopg2.extras import RealDictCursor
 from contextlib import contextmanager
 from dotenv import load_dotenv
 
-load_dotenv()
+# Load .env from project root (one level up from jobs/)
+env_path = Path(__file__).parent.parent / '.env'
+load_dotenv(env_path)
 
 DATABASE_URL = os.getenv("DATABASE_URL", "")
 
