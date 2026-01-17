@@ -1,5 +1,6 @@
 psycopg2-binary
 python-dotenv
+python-dateutil
 yfinance
 transformers
 torch
@@ -8,5 +9,6 @@ numpy
 requests
 newspaper3k
 lxml
+lxml_html_clean
 feedparser
 nltk

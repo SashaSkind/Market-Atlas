@@ -7,11 +7,10 @@ Task types:
 - DAILY_UPDATE_ALL: Enqueue REFRESH_STOCK for all active tickers
 """
 import time
-from datetime import datetime
 from db import query, execute, get_connection
 from providers.prices import fetch_daily_prices
-from providers.news import fetch_headlines
-from ml.sentiment import score_text
+from ingest_to_db import ingest_news_to_db
+from score_unscored_items import score_unscored_items as run_scoring
 from compute.aggregate_daily import compute_daily_aggregates
 from compute.metrics import compute_metrics
 
@@ -81,13 +80,14 @@ def handle_backfill_stock(ticker: str):
     compute_returns(ticker)
 
     # 2. Fetch and store news
-    print("Fetching news...")
-    headlines = fetch_headlines(ticker, days=90)
-    store_items(ticker, headlines)
+    print("Fetching and storing news...")
+    result = ingest_news_to_db(ticker, hours=168 * 13)  # ~90 days
+    print(f"  Ingested {result['inserted_count']} articles")
 
-    # 3. Score unscored items
+    # 3. Score unscored items (using new module with full text + chunking)
     print("Scoring items...")
-    score_unscored_items(ticker)
+    result = run_scoring(ticker, limit=100)
+    print(f"  Scored {result['scored']}/{result['selected']} items")
 
     # 4. Compute aggregates
     print("Computing aggregates...")
@@ -104,15 +104,22 @@ def handle_refresh_stock(ticker: str):
     """Refresh recent data for a ticker (last 3 days)."""
     print(f"=== REFRESH_STOCK: {ticker} ===")
 
-    # Same as backfill but for fewer days
+    # 1. Fetch and store recent prices
     prices = fetch_daily_prices(ticker, days=5)
     store_prices(ticker, prices[-3:] if len(prices) >= 3 else prices)
     compute_returns(ticker)
 
-    headlines = fetch_headlines(ticker, days=3)
-    store_items(ticker, headlines)
+    # 2. Fetch and store recent news
+    print("Fetching and storing news...")
+    result = ingest_news_to_db(ticker, hours=72)  # 3 days
+    print(f"  Ingested {result['inserted_count']} articles")
 
-    score_unscored_items(ticker)
+    # 3. Score unscored items (using new module with full text + chunking)
+    print("Scoring items...")
+    result = run_scoring(ticker, limit=50)
+    print(f"  Scored {result['scored']}/{result['selected']} items")
+
+    # 4. Compute aggregates
     compute_daily_aggregates(ticker)
     compute_metrics(ticker, window_days=7)
 
@@ -159,56 +166,6 @@ def compute_returns(ticker: str):
           AND prev.ticker = p.ticker
           AND prev.date = p.date - INTERVAL '1 day'
     """, (ticker,))
-
-
-def store_items(ticker: str, items: list):
-    """Insert items (dedupe by source+url)."""
-    count = 0
-    for item in items:
-        try:
-            execute("""
-                INSERT INTO items (ticker, source, source_id, published_at, title, url, snippet)
-                VALUES (%s, %s, %s, %s, %s, %s, %s)
-                ON CONFLICT (source, url) DO NOTHING
-            """, (
-                ticker,
-                item["source"],
-                item.get("source_id"),
-                item["published_at"],
-                item["title"],
-                item["url"],
-                item.get("snippet"),
-            ))
-            count += 1
-        except Exception as e:
-            print(f"Error inserting item: {e}")
-    print(f"Stored {count} items for {ticker}")
-
-
-def score_unscored_items(ticker: str):
-    """Score items that don't have scores yet."""
-    # Get unscored items
-    unscored = query("""
-        SELECT i.id, i.title
-        FROM items i
-        LEFT JOIN item_scores s ON i.id = s.item_id AND s.model = 'hf_fin_v1'
-        WHERE i.ticker = %s AND s.item_id IS NULL
-    """, (ticker,))
-
-    if not unscored:
-        print(f"No unscored items for {ticker}")
-        return
-
-    print(f"Scoring {len(unscored)} items for {ticker}")
-    for item in unscored:
-        result = score_text(item["title"])
-        execute("""
-            INSERT INTO item_scores (item_id, model, sentiment_label, sentiment_score, confidence)
-            VALUES (%s, 'hf_fin_v1', %s, %s, %s)
-            ON CONFLICT (item_id, model) DO NOTHING
-        """, (item["id"], result["label"], result["sentiment_score"], result["confidence"]))
-
-    print(f"Scored {len(unscored)} items for {ticker}")
 
 
 def run_once():
