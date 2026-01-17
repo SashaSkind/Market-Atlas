@@ -41,7 +41,7 @@ get:
 	@echo "✅ Setup complete!"
 	@echo ""
 	@echo "Next steps:"
-	@echo "  1. Copy api/.env.example to api/.env and add your Supabase credentials"
+	@echo "  1. Copy .env.example to .env and add your credentials"
 	@echo "  2. Run 'make run' to start development servers"
 
 # ============================================

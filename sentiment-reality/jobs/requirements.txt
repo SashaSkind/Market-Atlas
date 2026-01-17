@@ -4,7 +4,8 @@ yfinance
 transformers
 torch
 pandas
-numpyrequests
+numpy
+requests
 newspaper3k
 lxml
 feedparser
