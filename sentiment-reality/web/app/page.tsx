@@ -129,16 +129,18 @@ export default function Home() {
           )}
 
           <Box id="overview">
-            <Stack spacing={2}>
+            <Stack spacing={1.5}>
               <Typography variant="overline" color="text.secondary">
                 Narrative vs. Performance
               </Typography>
-              <Typography variant="h3">
-                Find the moments when sentiment goes confidently wrong.
+              <Typography
+                variant="h4"
+                sx={{ fontWeight: 700, lineHeight: 1.1 }}
+              >
+                Find false conviction.
               </Typography>
-              <Typography color="text.secondary">
-                Track the gap between public narratives and actual price action. Surface
-                misalignment, quantify conviction, and explain the why.
+              <Typography variant="body1" sx={{ opacity: 0.8 }}>
+                Where headlines are confident and price action disagrees.
               </Typography>
               <Stack
                 direction={{ xs: 'column', sm: 'row' }}
