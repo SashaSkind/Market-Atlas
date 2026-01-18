@@ -3,7 +3,8 @@ from fastapi import APIRouter, Query
 from datetime import date, timedelta
 from schemas import (
     DashboardData, DashboardDataWithHeadlines, DailyDataPoint, PricePoint, DailySentiment,
-    WindowMetric, SentimentSummary, PriceSummary, AlignmentSummary, NewsItem, Coverage
+    WindowMetric, SentimentSummary, PriceSummary, AlignmentSummary, NewsItem, Coverage,
+    MisalignmentDay
 )
 
 router = APIRouter()
@@ -148,6 +149,12 @@ def get_dashboard(
             alignment_summary = _compute_alignment_from_daily(ticker, start_date)
         else:
             alignment_summary = _compute_alignment_summary(metrics)
+
+        # Add misalignment list to alignment summary
+        misalignment_list = _compute_misalignment_list(ticker, start_date)
+        alignment_summary.misalignment_list = misalignment_list
+        alignment_summary.misalignment_days = len(misalignment_list)
+
         coverage = _compute_coverage(ticker, period)
 
         return DashboardDataWithHeadlines(
@@ -309,6 +316,65 @@ def _compute_coverage(ticker: str, period: int) -> Coverage:
         coverage_start=str(row["min_date"]) if row.get("min_date") else None,
         coverage_end=str(row["max_date"]) if row.get("max_date") else None,
     )
+
+
+def _compute_misalignment_list(ticker: str, start_date) -> list[MisalignmentDay]:
+    """Compute misalignment days where sentiment and price disagree."""
+    rows = query("""
+        SELECT
+            da.date,
+            da.sentiment_avg,
+            da.article_count,
+            pd.return_1d,
+            pd.close
+        FROM daily_agg da
+        LEFT JOIN prices_daily pd ON pd.ticker = da.ticker AND pd.date = da.date
+        WHERE da.ticker = %s AND da.date >= %s
+        ORDER BY da.date DESC
+    """, (ticker, start_date))
+
+    misalignment_list = []
+    for r in rows:
+        sentiment = r.get("sentiment_avg")
+        price_return = r.get("return_1d")
+
+        # Skip if missing data
+        if sentiment is None or price_return is None:
+            continue
+
+        # Skip if both near zero (no clear signal)
+        # sentiment is -1 to +1, return_1d is percentage (e.g. -4.19 means -4.19%)
+        if abs(sentiment) < 0.05 or abs(price_return) < 0.5:
+            continue
+
+        # Misalignment: signs differ
+        sentiment_bullish = sentiment > 0
+        price_up = price_return > 0
+
+        if sentiment_bullish == price_up:
+            continue  # Aligned, skip
+
+        # Build tag
+        if sentiment_bullish and not price_up:
+            tag = "Bullish narrative, bearish move"
+        else:
+            tag = "Bearish narrative, bullish move"
+
+        strength = abs(sentiment) * abs(price_return)
+
+        misalignment_list.append(MisalignmentDay(
+            date=str(r["date"]),
+            sentiment_avg=round(sentiment, 3) if sentiment else None,
+            article_count=r.get("article_count"),
+            return_1d=round(price_return, 2) if price_return else None,  # already in percentage
+            close=round(r.get("close"), 2) if r.get("close") else None,
+            tag=tag,
+            strength=round(strength, 4),
+        ))
+
+    # Sort by strength (biggest misalignments first)
+    misalignment_list.sort(key=lambda x: x.strength, reverse=True)
+    return misalignment_list
 
 
 def _mock_dashboard(ticker: str, period: int) -> DashboardDataWithHeadlines:

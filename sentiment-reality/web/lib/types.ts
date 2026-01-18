@@ -41,9 +41,20 @@ export interface PriceSummary {
   period_return?: number | null
 }
 
+export interface MisalignmentDay {
+  date: string
+  sentiment_avg?: number | null
+  article_count?: number | null
+  return_1d?: number | null  // percentage
+  close?: number | null
+  tag: string
+  strength: number
+}
+
 export interface AlignmentSummary {
   score?: number | null
   misalignment_days?: number | null
+  misalignment_list?: MisalignmentDay[]
   interpretation?: string | null
 }
 

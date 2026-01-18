@@ -38,9 +38,20 @@ class PriceSummary(BaseModel):
     current_price: Optional[float] = None
     period_return: Optional[float] = None
 
+class MisalignmentDay(BaseModel):
+    date: str  # YYYY-MM-DD
+    sentiment_avg: Optional[float] = None  # from daily_agg
+    article_count: Optional[int] = None  # from daily_agg
+    return_1d: Optional[float] = None  # from prices_daily (percentage)
+    close: Optional[float] = None  # from prices_daily
+    tag: str  # "Bullish narrative, bearish move" etc
+    strength: float  # abs(sentiment_avg) * abs(return_1d)
+
+
 class AlignmentSummary(BaseModel):
     score: Optional[float] = None
     misalignment_days: Optional[int] = None
+    misalignment_list: list[MisalignmentDay] = []
     interpretation: Optional[str] = None
 
 # ========== Daily Data Point (combined) ==========

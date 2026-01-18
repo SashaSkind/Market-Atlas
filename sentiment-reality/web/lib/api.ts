@@ -1,4 +1,4 @@
-import type { DashboardData, Stock, TaskResponse } from './types'
+import type { DashboardData, Stock, TaskResponse, NewsItem } from './types'
 
 async function fetchJson<T>(input: RequestInfo, init?: RequestInit): Promise<T> {
   const response = await fetch(input, init)
@@ -30,4 +30,8 @@ export async function addStock(ticker: string): Promise<TaskResponse> {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ ticker }),
   })
+}
+
+export async function getHeadlinesByDate(ticker: string, date: string): Promise<NewsItem[]> {
+  return fetchJson<NewsItem[]>(`/api/headlines/by-date?ticker=${ticker}&date=${date}`)
 }
