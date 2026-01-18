@@ -217,6 +217,7 @@ export default function Home() {
             selectedPrice={data?.price_summary.current_price ?? null}
             selectedSentiment={data?.sentiment_summary.current_score ?? null}
             priceReturn={data?.price_summary.period_return ?? null}
+            selectedVolume={data?.daily_data.at(-1)?.price?.volume ?? null}
             isLoading={isLoading}
           />
 

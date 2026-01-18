@@ -8,6 +8,7 @@ interface WatchlistPanelProps {
   selectedPrice?: number | null
   selectedSentiment?: number | null
   priceReturn?: number | null
+  selectedVolume?: number | null
   isLoading?: boolean
 }
 
@@ -17,6 +18,7 @@ export default function WatchlistPanel({
   selectedPrice,
   selectedSentiment,
   priceReturn,
+  selectedVolume,
   isLoading,
 }: WatchlistPanelProps) {
   return (
@@ -42,9 +44,13 @@ export default function WatchlistPanel({
               <Skeleton variant="text" width={120} />
             </Stack>
           ) : (
-            <Stack spacing={0.5}>
-              <Typography color="text.secondary">{statusText}</Typography>
-              <Typography variant="caption" color="text.secondary">
+            <Stack spacing={1}>
+              {statusText.toLowerCase() !== 'ready' && (
+                <Typography variant="body1" color="text.secondary">
+                  {statusText}
+                </Typography>
+              )}
+              <Typography variant="h5" color="text.secondary">
                 Price:{' '}
                 {selectedPrice != null ? `$${selectedPrice.toFixed(2)}` : '—'}
                 {selectedPrice != null && priceReturn != null && (
@@ -73,10 +79,16 @@ export default function WatchlistPanel({
                   </Box>
                 )}
               </Typography>
-              <Typography variant="caption" color="text.secondary">
+              <Typography variant="h5" color="text.secondary">
                 Sentiment score:{' '}
                 {selectedSentiment !== undefined && selectedSentiment !== null
                   ? selectedSentiment.toFixed(2)
+                  : '—'}
+              </Typography>
+              <Typography variant="h5" color="text.secondary">
+                Trade volume:{' '}
+                {selectedVolume != null
+                  ? selectedVolume.toLocaleString('en-US')
                   : '—'}
               </Typography>
             </Stack>
