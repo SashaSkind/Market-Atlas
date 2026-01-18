@@ -11,17 +11,11 @@ import {
   Typography,
 } from '@mui/material'
 import type { NewsItem } from '@/lib/types'
+import { formatDate } from '@/lib/utils'
 
 interface HeadlineDetailsModalProps {
   headline: NewsItem | null
   onClose: () => void
-}
-
-const formatDate = (value?: string | null) => {
-  if (!value) return '—'
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return value
-  return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).format(date)
 }
 
 export default function HeadlineDetailsModal({ headline, onClose }: HeadlineDetailsModalProps) {
@@ -33,7 +27,7 @@ export default function HeadlineDetailsModal({ headline, onClose }: HeadlineDeta
           <Stack spacing={2} sx={{ mt: 1 }}>
             <Typography variant="h6">{headline.title}</Typography>
             <Typography color="text.secondary">
-              {headline.source ?? 'Unknown source'} · {formatDate(headline.published_at)}
+              {headline.source ?? 'Unknown source'} · {formatDate(headline.published_at, true)}
             </Typography>
             <Divider />
             <Typography>

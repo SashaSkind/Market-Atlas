@@ -1,17 +1,6 @@
 'use client'
 
-import {
-  AppBar,
-  Box,
-  Button,
-  Stack,
-  Toolbar,
-  Typography,
-  Container,
-  ToggleButton,
-  ToggleButtonGroup,
-  Link,
-} from '@mui/material'
+import { Box, Button, Container, Link, Stack, Toolbar, Typography } from '@mui/material'
 
 interface AppShellProps {
   ticker: string
@@ -26,28 +15,16 @@ interface AppShellProps {
 }
 
 export default function AppShell({
-  ticker,
-  tickers,
-  period,
-  onTickerChange,
-  onPeriodChange,
-  onRefresh,
-  onAddStock,
+  ticker: _ticker,
+  tickers: _tickers,
+  period: _period,
+  onTickerChange: _onTickerChange,
+  onPeriodChange: _onPeriodChange,
+  onRefresh: _onRefresh,
+  onAddStock: _onAddStock,
   lastUpdated,
   children,
 }: AppShellProps) {
-  const handleTickerChange = (_event: React.MouseEvent<HTMLElement>, value: string | null) => {
-    if (value) {
-      onTickerChange(value)
-    }
-  }
-
-  const handlePeriodChange = (_event: React.MouseEvent<HTMLElement>, value: string | null) => {
-    if (value) {
-      onPeriodChange(Number(value))
-    }
-  }
-
   return (
     <Box>
       <Box sx={{ color: 'text.primary', pt: { xs: 2, md: 3 } }}>
@@ -160,91 +137,6 @@ export default function AppShell({
           mx: 'auto',
         }}
       >
-        {/* Controls box disabled */}
-        {/* <Stack
-          direction={{ xs: 'column', sm: 'row' }}
-          spacing={2}
-          alignItems={{ xs: 'stretch', sm: 'center' }}
-          sx={{ mb: 3 }}
-        >
-          <Box
-            sx={{
-              width: '100%',
-              borderRadius: 3,
-              border: 1,
-              borderColor: 'rgba(255, 255, 255, 0.06)',
-              bgcolor: 'rgba(20, 27, 26, 0.9)',
-              p: { xs: 2, sm: 2.5 },
-              boxShadow: '0 12px 30px rgba(0, 0, 0, 0.5)',
-            }}
-          >
-            <Stack spacing={2}>
-              <Stack spacing={1}>
-                <Typography variant="caption" color="text.secondary">
-                  Ticker
-                </Typography>
-                <ToggleButtonGroup
-                  value={ticker}
-                  exclusive
-                  onChange={handleTickerChange}
-                  sx={{
-                    flexWrap: 'nowrap',
-                    gap: 1,
-                    overflowX: 'auto',
-                    pb: 0.5,
-                    '& .MuiToggleButton-root': {
-                      whiteSpace: 'nowrap',
-                      textTransform: 'none',
-                      borderRadius: 2,
-                      px: 2,
-                      borderColor: 'rgba(148, 163, 184, 0.4)',
-                    },
-                  }}
-                >
-                  {tickers.map((item) => (
-                    <ToggleButton key={item} value={item} size="small">
-                      {item}
-                    </ToggleButton>
-                  ))}
-                </ToggleButtonGroup>
-              </Stack>
-              <Stack spacing={1}>
-                <Typography variant="caption" color="text.secondary">
-                  Period
-                </Typography>
-                <ToggleButtonGroup
-                  value={String(period)}
-                  exclusive
-                  onChange={handlePeriodChange}
-                  sx={{
-                    flexWrap: 'wrap',
-                    gap: 1,
-                    '& .MuiToggleButton-root': {
-                      textTransform: 'none',
-                      borderRadius: 2,
-                      px: 2,
-                      borderColor: 'rgba(148, 163, 184, 0.4)',
-                    },
-                  }}
-                >
-                  {[7, 30, 90].map((value) => (
-                    <ToggleButton key={value} value={String(value)} size="small">
-                      {value}d
-                    </ToggleButton>
-                  ))}
-                </ToggleButtonGroup>
-              </Stack>
-              <Stack direction="row" spacing={2} sx={{ width: { xs: '100%', sm: 'auto' } }}>
-                <Button variant="outlined" onClick={onAddStock} fullWidth>
-                  Add Ticker
-                </Button>
-                <Button variant="contained" onClick={onRefresh} fullWidth>
-                  Refresh
-                </Button>
-              </Stack>
-            </Stack>
-          </Box>
-        </Stack> */}
         {children}
       </Container>
     </Box>

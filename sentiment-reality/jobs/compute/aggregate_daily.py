@@ -1,6 +1,7 @@
 """Compute daily sentiment aggregates from item_scores."""
 import sys
-sys.path.insert(0, '..')
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).parent.parent))
 from db import query, execute
 
 def compute_daily_aggregates(ticker: str):

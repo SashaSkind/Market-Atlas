@@ -1,6 +1,7 @@
 """Compute rolling window metrics (sentiment vs price alignment)."""
 import sys
-sys.path.insert(0, '..')
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).parent.parent))
 from db import query, execute
 import numpy as np
 from datetime import date, timedelta
@@ -137,10 +138,10 @@ def _compute_window_metrics(sentiments: list, returns: list) -> dict:
         interpretation = "Noisy"
 
     return {
-        "corr": round(corr, 4),
-        "directional_match": round(directional_match, 4),
-        "alignment_score": round(alignment_score, 4),
-        "misalignment_days": misalignment_days,
+        "corr": float(round(corr, 4)),
+        "directional_match": float(round(directional_match, 4)),
+        "alignment_score": float(round(alignment_score, 4)),
+        "misalignment_days": int(misalignment_days),
         "interpretation": interpretation,
     }
 

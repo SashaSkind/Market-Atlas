@@ -5,7 +5,7 @@
 // TODO: Implement a combined chart showing sentiment vs price alignment
 //
 // Props:
-//   data: AlignmentMetric[] from @/lib/types
+//   data: WindowMetric[] from @/lib/types
 //
 // Implementation:
 //   - Use Recharts library
@@ -23,10 +23,10 @@
 // Example usage:
 //   <AlignmentChart data={dailyData.map(d => d.alignment)} />
 
-import type { AlignmentMetric } from '@/lib/types'
+import type { WindowMetric } from '@/lib/types'
 
 interface AlignmentChartProps {
-  data: AlignmentMetric[]
+  data: WindowMetric[]
 }
 
 export function AlignmentChart({ data }: AlignmentChartProps) {

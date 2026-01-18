@@ -1,18 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import {
-  Alert,
-  Box,
-  Button,
-  Card,
-  CardContent,
-  Chip,
-  Grid,
-  LinearProgress,
-  Stack,
-  Typography,
-} from '@mui/material'
+import { Alert, Box, Button, Grid, Stack, Typography } from '@mui/material'
 import AppShell from '@/components/layout/AppShell'
 import PricePanel from '@/components/panels/PricePanel'
 import SentimentPanel from '@/components/panels/SentimentPanel'
@@ -52,30 +41,6 @@ const SAMPLE_HEADLINES: NewsItem[] = [
     confidence: 0.66,
   },
 ]
-
-const formatNumber = (value?: number | null, digits: number = 2) => {
-  if (value === null || value === undefined || Number.isNaN(value)) return '—'
-  return value.toFixed(digits)
-}
-
-const formatPercent = (value?: number | null) => {
-  if (value === null || value === undefined || Number.isNaN(value)) return '—'
-  const sign = value > 0 ? '+' : ''
-  return `${sign}${value.toFixed(2)}%`
-}
-
-const scalePercent = (value?: number | null, min: number = -1, max: number = 1) => {
-  if (value === null || value === undefined) return 0
-  const clamped = Math.min(Math.max(value, min), max)
-  return ((clamped - min) / (max - min)) * 100
-}
-
-const alignmentLabel = (score?: number | null) => {
-  if (score === null || score === undefined) return 'unknown'
-  if (score < 0) return 'high'
-  if (score < 0.3) return 'medium'
-  return 'low'
-}
 
 export default function Home() {
   const [selectedTicker, setSelectedTicker] = useState('TSLA')
@@ -199,7 +164,7 @@ export default function Home() {
 
           <Box id="signals">
             <Grid container spacing={3} alignItems="stretch">
-              <Grid item xs={12} md={4}>
+              <Grid size={{ xs: 12, md: 4 }}>
                 <SentimentPanel
                   ticker={selectedTicker}
                   sentimentScore={sentimentScore}
@@ -212,11 +177,11 @@ export default function Home() {
                   isLoading={isLoading}
                 />
               </Grid>
-              <Grid item xs={12} md={4}>
+              <Grid size={{ xs: 12, md: 4 }}>
                 <AlignmentPanel
                   tickers={tickers}
                   statusText={
-                    error ? 'API unavailable or no data returned.' : 'API unavailable or no data returned.'
+                    error ? 'API unavailable.' : data ? 'Ready' : 'Loading data...'
                   }
                   selectedTicker={trackedTicker}
                   selectedPrice={null}
@@ -225,7 +190,7 @@ export default function Home() {
                   isLoading={isLoading}
                 />
               </Grid>
-              <Grid item xs={12} md={4}>
+              <Grid size={{ xs: 12, md: 4 }}>
                 <PricePanel
                   score={alignmentScore}
                   interpretation={data?.alignment.interpretation ?? null}
@@ -241,7 +206,7 @@ export default function Home() {
 
           <Box id="timeline">
             <Grid container spacing={3}>
-              <Grid item xs={12} md={4}>
+              <Grid size={{ xs: 12, md: 4 }}>
                 <Stack spacing={1}>
                   <Typography variant="h6">Today&apos;s Narrative Shifts</Typography>
                   <Typography color="text.secondary">
@@ -249,7 +214,7 @@ export default function Home() {
                   </Typography>
                 </Stack>
               </Grid>
-              <Grid item xs={12} md={8}>
+              <Grid size={{ xs: 12, md: 8 }}>
                 <HeadlinesPanel
                   headlines={SAMPLE_HEADLINES.map((headline) => ({
                     ...headline,

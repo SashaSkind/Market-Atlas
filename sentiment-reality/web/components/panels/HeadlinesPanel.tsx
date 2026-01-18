@@ -10,18 +10,12 @@ import {
   Paper,
 } from '@mui/material'
 import type { NewsItem } from '@/lib/types'
+import { formatDate } from '@/lib/utils'
 
 interface HeadlinesPanelProps {
   headlines: NewsItem[]
   isLoading?: boolean
   onSelectHeadline: (headline: NewsItem) => void
-}
-
-const formatDate = (value?: string | null) => {
-  if (!value) return '—'
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return value
-  return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' }).format(date)
 }
 
 export default function HeadlinesPanel({ headlines, isLoading, onSelectHeadline }: HeadlinesPanelProps) {
