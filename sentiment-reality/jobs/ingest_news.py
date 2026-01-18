@@ -6,6 +6,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 from newspaper import Article
 import yfinance as yf
+import psycopg2
 
 # Load .env from project root (one level up from jobs/)
 env_path = Path(__file__).parent.parent / '.env'
@@ -216,6 +217,77 @@ def get_article_text(url: str) -> str:
     
     except Exception:
         return ""
+
+
+def get_daily_metrics(symbol: str, current_day: str, previous_day: str) -> dict:
+    """
+    Retrieve close and volume for current and previous day from prices_daily,
+    and sentiment_avg for current day from daily_agg using Supabase/PostgreSQL.
+
+    Args:
+        symbol (str): Stock ticker symbol.
+        current_day (str): Date in 'YYYY-MM-DD' format.
+        previous_day (str): Date in 'YYYY-MM-DD' format.
+
+    Returns:
+        dict: {
+            'current_close': float,
+            'current_volume': int,
+            'previous_close': float,
+            'previous_volume': int,
+            'sentiment_avg': float
+        }
+    """
+    # Get DB credentials from environment variables
+    db_host = os.getenv("SUPABASE_DB_HOST")
+    db_name = os.getenv("SUPABASE_DB_NAME")
+    db_user = os.getenv("SUPABASE_DB_USER")
+    db_pass = os.getenv("SUPABASE_DB_PASSWORD")
+    db_port = os.getenv("SUPABASE_DB_PORT", "5432")
+
+    conn = psycopg2.connect(
+        host=db_host,
+        dbname=db_name,
+        user=db_user,
+        password=db_pass,
+        port=db_port
+    )
+    cursor = conn.cursor()
+
+    # Current day close and volume
+    cursor.execute("""
+        SELECT close, volume FROM prices_daily
+        WHERE symbol = %s AND date = %s
+    """, (symbol, current_day))
+    current_row = cursor.fetchone()
+    current_close, current_volume = current_row if current_row else (None, None)
+
+    # Previous day close and volume
+    cursor.execute("""
+        SELECT close, volume FROM prices_daily
+        WHERE symbol = %s AND date = %s
+    """, (symbol, previous_day))
+    prev_row = cursor.fetchone()
+    previous_close, previous_volume = prev_row if prev_row else (None, None)
+
+    # Sentiment avg for current day
+    cursor.execute("""
+        SELECT sentiment_avg FROM daily_agg
+        WHERE symbol = %s AND date = %s
+    """, (symbol, current_day))
+    sentiment_row = cursor.fetchone()
+    sentiment_avg = sentiment_row[0] if sentiment_row else None
+
+    cursor.close()
+    conn.close()
+
+    return {
+        'current_close': current_close,
+        'current_volume': current_volume,
+        'previous_close': previous_close,
+        'previous_volume': previous_volume,
+        'sentiment_avg': sentiment_avg
+    }
 
 
 if __name__ == "__main__":
