@@ -13,6 +13,8 @@ import time
 import json
 from db import fetch_all, execute, get_connection
 from pipeline import run_pipeline_for_ticker
+from alignment import insert_alignment_result
+from datetime import datetime
 
 # Default parameters for each task type
 DAILY_PARAMS = {
@@ -142,6 +144,7 @@ def handle_daily_update_all(task: dict) -> dict:
     params = {**DAILY_PARAMS, **payload}
 
     results = {}
+    today = datetime.utcnow().strftime("%Y-%m-%d")
     for row in tickers:
         ticker = row["ticker"]
         try:
@@ -154,9 +157,12 @@ def handle_daily_update_all(task: dict) -> dict:
                 metrics_days=params["metrics_days"],
                 window_days=params["window_days"],
             )
+            # Insert alignment result for today
+            alignment_success = insert_alignment_result(ticker, today)
             results[ticker] = {
                 "success": result["success"],
                 "elapsed": result["elapsed_seconds"],
+                "alignment_inserted": alignment_success,
             }
         except Exception as e:
             print(f"Error processing {ticker}: {e}")
