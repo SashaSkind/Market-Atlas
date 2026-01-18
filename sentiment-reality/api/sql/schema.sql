@@ -1,3 +1,17 @@
+-- ============================================
+-- H) alignment_daily - daily alignment results
+-- ============================================
+CREATE TABLE IF NOT EXISTS alignment_daily (
+    ticker TEXT NOT NULL,
+    date DATE NOT NULL,
+    alignment_raw DOUBLE PRECISION NOT NULL,
+    alignment_weight DOUBLE PRECISION NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    PRIMARY KEY (ticker, date)
+);
+
+CREATE INDEX IF NOT EXISTS idx_alignment_daily_ticker_date
+    ON alignment_daily(ticker, date);
 -- Sentiment Reality Database Schema
 --
 -- Notes:
