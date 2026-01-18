@@ -34,7 +34,7 @@ export default function HeadlinesPanel({ headlines, isLoading, onSelectHeadline 
     >
       <CardContent>
         <Stack spacing={2}>
-          <Typography variant="h6">Today&apos;s Narrative Shifts</Typography>
+          <Typography variant="h6">Recent Articles</Typography>
           {isLoading ? (
             <Stack spacing={2}>
               {Array.from({ length: 2 }).map((_, index) => (

@@ -17,6 +17,9 @@ except Exception:
     def is_configured():
         return False
 
+# Toggle alignment source: True = alignment_daily, False = metrics_windowed
+USE_DAILY_ALIGNMENT = True
+
 
 @router.get("/api/dashboard", response_model=DashboardDataWithHeadlines)
 @router.get("/dashboard", response_model=DashboardDataWithHeadlines, include_in_schema=False)
@@ -141,7 +144,10 @@ def get_dashboard(
         # Compute summaries
         sentiment_summary = _compute_sentiment_summary(sentiments)
         price_summary = _compute_price_summary(prices)
-        alignment_summary = _compute_alignment_summary(metrics)
+        if USE_DAILY_ALIGNMENT:
+            alignment_summary = _compute_alignment_from_daily(ticker, start_date)
+        else:
+            alignment_summary = _compute_alignment_summary(metrics)
         coverage = _compute_coverage(ticker, period)
 
         return DashboardDataWithHeadlines(
@@ -230,6 +236,56 @@ def _compute_alignment_summary(metrics: list) -> AlignmentSummary:
         score=latest.get("alignment_score"),
         misalignment_days=latest.get("misalignment_days"),
         interpretation=latest.get("interpretation")
+    )
+
+
+def _compute_alignment_from_daily(ticker: str, start_date) -> AlignmentSummary:
+    """Compute alignment summary from alignment_daily table (weighted average)."""
+    rows = query("""
+        SELECT date, alignment_raw, alignment_weight
+        FROM alignment_daily
+        WHERE ticker = %s AND date >= %s
+        ORDER BY date DESC
+    """, (ticker, start_date))
+
+    if not rows:
+        return AlignmentSummary()
+
+    # Weighted average: Σ(raw × weight) / Σ(weight)
+    total_weighted = sum(
+        r["alignment_raw"] * r["alignment_weight"]
+        for r in rows
+        if r["alignment_raw"] is not None and r["alignment_weight"] is not None
+    )
+    total_weight = sum(
+        r["alignment_weight"]
+        for r in rows
+        if r["alignment_weight"] is not None
+    )
+
+    if total_weight == 0:
+        return AlignmentSummary()
+
+    score = total_weighted / total_weight
+
+    # Count misalignment days (negative alignment_raw)
+    misalignment_days = sum(
+        1 for r in rows
+        if r["alignment_raw"] is not None and r["alignment_raw"] < 0
+    )
+
+    # Interpretation based on score
+    if score > 0.3:
+        interpretation = "Aligned"
+    elif score < -0.3:
+        interpretation = "Misleading"
+    else:
+        interpretation = "Noisy"
+
+    return AlignmentSummary(
+        score=round(score, 2),
+        misalignment_days=misalignment_days,
+        interpretation=interpretation
     )
 
 
