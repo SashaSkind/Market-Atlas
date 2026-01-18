@@ -20,6 +20,7 @@ def run_pipeline_for_ticker(
     agg_days: int = 90,
     metrics_days: int = 90,
     window_days: int = 7,
+    window_days_list: list[int] | None = None,
 ) -> dict:
     """
     Run the full data pipeline for a single ticker.
@@ -32,6 +33,7 @@ def run_pipeline_for_ticker(
         agg_days: Days of daily aggregates to compute (default 90)
         metrics_days: Days of metrics to compute (default 90)
         window_days: Rolling window size for metrics (default 7)
+        window_days_list: List of window sizes to compute (e.g., [7, 14, 30])
 
     Returns:
         Summary dict with counts from each step
@@ -39,11 +41,14 @@ def run_pipeline_for_ticker(
     ticker = ticker.upper()
     started = datetime.now()
 
+    # Determine which windows to compute
+    windows = window_days_list or [window_days]
+
     print(f"\n{'='*60}")
     print(f"PIPELINE: {ticker}")
     print(f"  news_hours={news_hours}, score_limit={score_limit}")
     print(f"  prices_days={prices_days}, agg_days={agg_days}")
-    print(f"  metrics_days={metrics_days}, window_days={window_days}")
+    print(f"  metrics_days={metrics_days}, windows={windows}")
     print(f"{'='*60}")
 
     summary = {
@@ -79,11 +84,17 @@ def run_pipeline_for_ticker(
         summary["steps"]["daily_agg"] = agg_result
         print(f"      → Updated {agg_result.get('count', 0)} daily aggregates")
 
-        # Step 5: Compute metrics
+        # Step 5: Compute metrics for all window sizes
         print("\n[5/5] Computing metrics...")
-        metrics_result = compute_metrics_windowed(ticker, window_days=window_days, days=metrics_days)
-        summary["steps"]["metrics"] = metrics_result
-        print(f"      → Updated {metrics_result.get('count', 0)} metric rows")
+        metrics_results = {}
+        total_metrics = 0
+        for wd in windows:
+            result = compute_metrics_windowed(ticker, window_days=wd, days=metrics_days)
+            metrics_results[f"window_{wd}"] = result
+            total_metrics += result.get("count", 0)
+            print(f"      → Window {wd}d: {result.get('count', 0)} rows")
+        summary["steps"]["metrics"] = metrics_results
+        print(f"      → Total: {total_metrics} metric rows")
 
         summary["success"] = True
 

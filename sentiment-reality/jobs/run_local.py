@@ -35,6 +35,17 @@ REFRESH_PARAMS = {
     "window_days": 7,
 }
 
+BACKFILL_PARAMS = {
+    "news_hours": 720,      # 30 days of news
+    "score_limit": 500,     # Higher limit for backfill
+    "prices_days": 180,
+    "agg_days": 30,
+    "metrics_days": 30,
+    "window_days_list": [7, 14, 30],  # Multiple windows
+}
+
+DEFAULT_TICKERS = ["TSLA", "NVDA", "JPM", "PFE", "GME"]
+
 
 def run_daily():
     """Run DAILY_UPDATE_ALL logic - process all active tickers."""
@@ -157,6 +168,54 @@ def run_bootstrap():
     return bootstrap_watchlist()
 
 
+def run_backfill_defaults():
+    """Run full 30-day backfill for all default tickers."""
+    from db import is_configured
+    from pipeline import run_pipeline_for_ticker
+
+    if not is_configured():
+        print("ERROR: Database not configured. Set DATABASE_URL in .env")
+        return False
+
+    print("=" * 60)
+    print("LOCAL RUN: BACKFILL DEFAULTS")
+    print(f"Tickers: {', '.join(DEFAULT_TICKERS)}")
+    print(f"Started: {datetime.now().isoformat()}")
+    print("=" * 60)
+
+    results = {}
+    for ticker in DEFAULT_TICKERS:
+        print(f"\n{'='*50}")
+        print(f"Backfilling {ticker}...")
+        print("=" * 50)
+        try:
+            result = run_pipeline_for_ticker(
+                ticker=ticker,
+                news_hours=BACKFILL_PARAMS["news_hours"],
+                score_limit=BACKFILL_PARAMS["score_limit"],
+                prices_days=BACKFILL_PARAMS["prices_days"],
+                agg_days=BACKFILL_PARAMS["agg_days"],
+                metrics_days=BACKFILL_PARAMS["metrics_days"],
+                window_days_list=BACKFILL_PARAMS["window_days_list"],
+            )
+            results[ticker] = result["success"]
+        except Exception as e:
+            print(f"\nError backfilling {ticker}: {e}")
+            results[ticker] = False
+
+    # Summary
+    print("\n" + "=" * 60)
+    print("BACKFILL COMPLETE")
+    print("=" * 60)
+    success_count = sum(1 for v in results.values() if v)
+    print(f"Results: {success_count}/{len(results)} tickers succeeded")
+    for ticker, success in results.items():
+        status = "✓" if success else "✗"
+        print(f"  {status} {ticker}")
+
+    return all(results.values())
+
+
 def print_usage():
     """Print usage information."""
     print("""
@@ -167,12 +226,14 @@ Commands:
   refresh <TICKER>   Run REFRESH_STOCK for a single ticker
   worker-once        Poll and process ONE task from queue
   bootstrap          Bootstrap default watchlist (TSLA, NVDA, JPM, PFE, GME)
+  backfill-defaults  Full 30-day backfill for all default tickers
 
 Examples:
   python run_local.py daily
   python run_local.py refresh TSLA
   python run_local.py worker-once
   python run_local.py bootstrap
+  python run_local.py backfill-defaults
 """)
 
 
@@ -196,6 +257,8 @@ def main():
         success = run_worker_once()
     elif command == "bootstrap":
         success = run_bootstrap()
+    elif command == "backfill-defaults":
+        success = run_backfill_defaults()
     elif command in ["-h", "--help", "help"]:
         print_usage()
         sys.exit(0)

@@ -15,8 +15,7 @@ import type { DashboardData, NewsItem, Stock } from '@/lib/types'
 export default function Home() {
   const [stocks, setStocks] = useState<Stock[]>([])
   const [selectedTicker, setSelectedTicker] = useState<string | null>(null)
-  const [trackedTicker, setTrackedTicker] = useState<string | null>(null)
-  const [period, setPeriod] = useState(90)
+  const [period, setPeriod] = useState(30)
   const [data, setData] = useState<DashboardData | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [isRefreshing, setIsRefreshing] = useState(false)
@@ -48,7 +47,6 @@ export default function Home() {
           const activeTickers = stockList.filter((s) => s.is_active).map((s) => s.ticker)
           if (activeTickers.length > 0 && !selectedTicker) {
             setSelectedTicker(activeTickers[0])
-            setTrackedTicker(activeTickers[0])
           }
         }
       } catch (err) {
@@ -98,6 +96,8 @@ export default function Home() {
   const sentimentScore = data?.sentiment_summary.current_score ?? null
   const priceReturn = data?.price_summary.period_return ?? null
   const alignmentScore = data?.alignment.score ?? null
+  const coverage = data?.coverage
+  const hasCoverageGap = coverage && coverage.sentiment_period_used < coverage.sentiment_period_requested
 
   return (
     <>
@@ -118,6 +118,14 @@ export default function Home() {
           )}
           {!data && !isLoading && !error && !isRefreshing && (
             <Alert severity="info">No data yet. Click Refresh.</Alert>
+          )}
+          {hasCoverageGap && (
+            <Alert severity="warning">
+              We measure narrative alignment only where we have narrative data.
+              <Typography variant="caption" display="block">
+                Sentiment coverage: {coverage.sentiment_days_available} / {coverage.sentiment_period_requested} days
+              </Typography>
+            </Alert>
           )}
 
           <Box id="overview">
@@ -163,7 +171,6 @@ export default function Home() {
                 <SentimentPanel
                   ticker={selectedTicker ?? ''}
                   sentimentScore={sentimentScore}
-                  priceReturn={priceReturn}
                   tags={[
                     data?.alignment.interpretation ?? 'Unlabeled',
                     data?.sentiment_summary.dominant_label ?? 'NEUTRAL',
@@ -178,10 +185,11 @@ export default function Home() {
                   statusText={
                     isRefreshing ? 'Refreshing...' : error ? 'API unavailable.' : data ? 'Ready' : 'Loading data...'
                   }
-                  selectedTicker={trackedTicker ?? ''}
-                  selectedPrice={null}
+                  selectedTicker={selectedTicker ?? ''}
+                  selectedPrice={data?.price_summary.current_price ?? null}
                   selectedSentiment={sentimentScore}
-                  onSelectTicker={setTrackedTicker}
+                  priceReturn={priceReturn}
+                  onSelectTicker={(t) => t && setSelectedTicker(t)}
                   isLoading={isLoading}
                 />
               </Grid>

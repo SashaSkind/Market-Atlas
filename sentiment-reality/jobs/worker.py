@@ -4,7 +4,8 @@ Task worker - polls tasks table and executes jobs.
 Task types:
 - DAILY_UPDATE_ALL: Run full pipeline for all active tickers
 - REFRESH_STOCK: Refresh data for a single ticker (user-triggered)
-- BACKFILL_STOCK: Full backfill (treated same as REFRESH with larger params)
+- BACKFILL_STOCK: Full 30-day backfill for a single ticker
+- BACKFILL_DEFAULTS: Backfill all 5 default tickers (TSLA, NVDA, JPM, PFE, GME)
 
 Safe claiming uses FOR UPDATE SKIP LOCKED to prevent double-processing.
 """
@@ -31,6 +32,17 @@ REFRESH_PARAMS = {
     "metrics_days": 30,
     "window_days": 7,
 }
+
+BACKFILL_PARAMS = {
+    "news_hours": 720,      # 30 days of news
+    "score_limit": 500,     # Higher limit for backfill
+    "prices_days": 180,
+    "agg_days": 30,
+    "metrics_days": 30,
+    "window_days_list": [7, 14, 30],  # Multiple windows
+}
+
+DEFAULT_TICKERS = ["TSLA", "NVDA", "JPM", "PFE", "GME"]
 
 MAX_ATTEMPTS = 3
 
@@ -195,6 +207,84 @@ def handle_refresh_stock(task: dict) -> dict:
     return result
 
 
+def handle_backfill_stock(task: dict) -> dict:
+    """
+    BACKFILL_STOCK: Full 30-day backfill for a single ticker.
+
+    Uses larger limits for news_hours and score_limit, and computes
+    metrics for multiple window sizes (7, 14, 30 days).
+    """
+    ticker = task.get("ticker")
+    if not ticker:
+        ticker = task.get("payload", {}).get("ticker")
+
+    if not ticker:
+        raise ValueError("No ticker specified in task")
+
+    print(f"\n{'='*60}")
+    print(f"BACKFILL_STOCK: {ticker}")
+    print(f"{'='*60}")
+
+    # Get params from payload or use backfill defaults
+    payload = task.get("payload", {})
+    params = {**BACKFILL_PARAMS, **payload}
+
+    result = run_pipeline_for_ticker(
+        ticker=ticker,
+        news_hours=params.get("news_hours", BACKFILL_PARAMS["news_hours"]),
+        score_limit=params.get("score_limit", BACKFILL_PARAMS["score_limit"]),
+        prices_days=params.get("prices_days", BACKFILL_PARAMS["prices_days"]),
+        agg_days=params.get("agg_days", BACKFILL_PARAMS["agg_days"]),
+        metrics_days=params.get("metrics_days", BACKFILL_PARAMS["metrics_days"]),
+        window_days_list=params.get("window_days_list", BACKFILL_PARAMS["window_days_list"]),
+    )
+
+    print(f"\n{'='*60}")
+    print(f"BACKFILL_STOCK COMPLETE: {ticker}")
+    print(f"{'='*60}")
+
+    return result
+
+
+def handle_backfill_defaults(task: dict) -> dict:
+    """
+    BACKFILL_DEFAULTS: Backfill all 5 default tickers.
+
+    Runs full backfill pipeline for TSLA, NVDA, JPM, PFE, GME.
+    """
+    print(f"\n{'='*60}")
+    print(f"BACKFILL_DEFAULTS: Processing {len(DEFAULT_TICKERS)} tickers")
+    print(f"  Tickers: {', '.join(DEFAULT_TICKERS)}")
+    print(f"{'='*60}")
+
+    results = {}
+    for ticker in DEFAULT_TICKERS:
+        try:
+            print(f"\n--- Backfilling {ticker} ---")
+            result = run_pipeline_for_ticker(
+                ticker=ticker,
+                news_hours=BACKFILL_PARAMS["news_hours"],
+                score_limit=BACKFILL_PARAMS["score_limit"],
+                prices_days=BACKFILL_PARAMS["prices_days"],
+                agg_days=BACKFILL_PARAMS["agg_days"],
+                metrics_days=BACKFILL_PARAMS["metrics_days"],
+                window_days_list=BACKFILL_PARAMS["window_days_list"],
+            )
+            results[ticker] = {
+                "success": result.get("success", False),
+                "elapsed": result.get("elapsed_seconds", 0),
+            }
+        except Exception as e:
+            print(f"Error backfilling {ticker}: {e}")
+            results[ticker] = {"success": False, "error": str(e)}
+
+    print(f"\n{'='*60}")
+    print(f"BACKFILL_DEFAULTS COMPLETE: {len(results)} tickers processed")
+    print(f"{'='*60}")
+
+    return {"tickers": DEFAULT_TICKERS, "results": results}
+
+
 def run_once() -> bool:
     """
     Process one task and return.
@@ -219,8 +309,9 @@ def run_once() -> bool:
         elif task_type == "REFRESH_STOCK":
             result = handle_refresh_stock(task)
         elif task_type == "BACKFILL_STOCK":
-            # Treat BACKFILL same as REFRESH but with larger limits
-            result = handle_refresh_stock(task)
+            result = handle_backfill_stock(task)
+        elif task_type == "BACKFILL_DEFAULTS":
+            result = handle_backfill_defaults(task)
         else:
             raise ValueError(f"Unknown task type: {task_type}")
 

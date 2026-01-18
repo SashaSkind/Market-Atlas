@@ -1,6 +1,6 @@
 'use client'
 
-import { Card, CardContent, Chip, Skeleton, Stack, Typography } from '@mui/material'
+import { Box, Card, CardContent, Chip, Skeleton, Stack, Typography } from '@mui/material'
 
 interface AlignmentPanelProps {
   tickers: string[]
@@ -8,6 +8,7 @@ interface AlignmentPanelProps {
   selectedTicker?: string
   selectedPrice?: number | null
   selectedSentiment?: number | null
+  priceReturn?: number | null
   onSelectTicker?: (ticker: string) => void
   isLoading?: boolean
 }
@@ -18,6 +19,7 @@ export default function AlignmentPanel({
   selectedTicker,
   selectedPrice,
   selectedSentiment,
+  priceReturn,
   onSelectTicker,
   isLoading,
 }: AlignmentPanelProps) {
@@ -63,9 +65,32 @@ export default function AlignmentPanel({
                 <Typography color="text.secondary">{statusText}</Typography>
                 <Typography variant="caption" color="text.secondary">
                   {selectedTicker ?? '—'} price:{' '}
-                  {selectedPrice !== undefined && selectedPrice !== null
-                    ? `$${selectedPrice.toFixed(2)}`
-                    : '—'}
+                  {selectedPrice != null ? `$${selectedPrice.toFixed(2)}` : '—'}
+                  {selectedPrice != null && priceReturn != null && (
+                    <Box
+                      component="span"
+                      sx={{ color: priceReturn >= 0 ? '#4ade80' : '#f87171', fontWeight: 500, ml: 1 }}
+                    >
+                      {(() => {
+                        const absChange = selectedPrice * (priceReturn / 100) / (1 + priceReturn / 100)
+                        return (
+                          <>
+                            {priceReturn >= 0 ? '+' : ''}${absChange.toFixed(2)} ({Math.abs(priceReturn).toFixed(2)}%)
+                            <Box
+                              component="span"
+                              sx={{
+                                display: 'inline-block',
+                                ml: 0.5,
+                                transform: priceReturn >= 0 ? 'rotate(-45deg)' : 'rotate(45deg)',
+                              }}
+                            >
+                              →
+                            </Box>
+                          </>
+                        )
+                      })()}
+                    </Box>
+                  )}
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
                   Sentiment score:{' '}

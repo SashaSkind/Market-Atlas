@@ -62,9 +62,19 @@ export interface NewsItem {
   source?: string | null
   published_at?: string | null
   sentiment_label?: SentimentLabel | null
+  sentiment_score?: number | null
   confidence?: number | null
   snippet?: string | null
   url?: string | null
+}
+
+// ========== Coverage ==========
+export interface Coverage {
+  sentiment_days_available: number
+  sentiment_period_requested: number
+  sentiment_period_used: number
+  coverage_start: string | null
+  coverage_end: string | null
 }
 
 // ========== Dashboard Response ==========
@@ -76,6 +86,7 @@ export interface DashboardData {
   alignment: AlignmentSummary
   daily_data: DailyDataPoint[]
   headlines: NewsItem[]
+  coverage?: Coverage | null
 }
 
 // ========== Stock Management ==========

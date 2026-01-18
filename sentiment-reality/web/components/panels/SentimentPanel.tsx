@@ -5,7 +5,6 @@ import { Card, CardContent, Chip, Skeleton, Stack, Typography } from '@mui/mater
 interface SentimentPanelProps {
   ticker?: string
   sentimentScore?: number | null
-  priceReturn?: number | null
   tags: string[]
   isLoading?: boolean
 }
@@ -13,7 +12,6 @@ interface SentimentPanelProps {
 export default function SentimentPanel({
   ticker,
   sentimentScore,
-  priceReturn,
   tags,
   isLoading,
 }: SentimentPanelProps) {
@@ -47,9 +45,6 @@ export default function SentimentPanel({
               <Typography color="text.secondary">
                 Sentiment {sentimentScore !== undefined && sentimentScore !== null
                   ? sentimentScore.toFixed(2)
-                  : '—'}{' '}
-                · Price {priceReturn !== undefined && priceReturn !== null
-                  ? `${priceReturn > 0 ? '+' : ''}${priceReturn.toFixed(2)}%`
                   : '—'}
               </Typography>
               <Stack direction="row" spacing={1} flexWrap="wrap">

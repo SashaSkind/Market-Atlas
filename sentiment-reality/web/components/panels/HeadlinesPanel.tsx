@@ -1,6 +1,7 @@
 'use client'
 
 import {
+  Box,
   Card,
   CardContent,
   Chip,
@@ -68,10 +69,31 @@ export default function HeadlinesPanel({ headlines, isLoading, onSelectHeadline 
                     {formatDate(item.published_at)}
                   </Typography>
                   <Typography variant="subtitle1" sx={{ mt: 0.5 }}>
-                    {item.title}
+                    {item.url ? (
+                      <Box
+                        component="a"
+                        href={item.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        sx={{
+                          color: 'inherit',
+                          textDecoration: 'none',
+                          '&:hover': { textDecoration: 'underline' },
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {item.title}
+                      </Box>
+                    ) : (
+                      item.title
+                    )}
                   </Typography>
                   <Stack direction="row" spacing={1} alignItems="center" sx={{ mt: 1 }}>
-                    <Chip size="small" label={item.sentiment_label ?? 'NEUTRAL'} />
+                    <Chip
+                      size="small"
+                      label={item.sentiment_label ?? 'Scoring...'}
+                      color={item.sentiment_label ? 'default' : 'warning'}
+                    />
                     <Typography variant="caption" color="text.secondary">
                       {item.confidence ? `${Math.round(item.confidence * 100)}%` : '—'}
                     </Typography>

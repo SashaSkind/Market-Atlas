@@ -33,7 +33,7 @@ export default function PricePanel({
           <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={2}>
             <Typography variant="h6">Alignment Score</Typography>
             <Stack direction="row" spacing={1}>
-              {[7, 30, 90].map((value) => (
+              {[7, 14, 30].map((value) => (
                 <Button
                   key={value}
                   size="small"
