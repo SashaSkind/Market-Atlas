@@ -78,7 +78,7 @@ def get_daily_summary(symbol: str, date: str) -> dict:
 		"yesterday_close": yesterday_close,
 		"yesterday_volume": yesterday_volume,
 		"avg_sentiment": avg_sentiment,
-		"today_article_count": article_count,
+		"article_count": article_count,
 		"yesterday_article_count": yesterday_article_count,
 	}
 
