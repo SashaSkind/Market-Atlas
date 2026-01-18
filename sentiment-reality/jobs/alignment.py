@@ -1,4 +1,4 @@
-from db import execute
+from db import execute, is_configured
 import numpy as np
 import query_db as qdb
 from db import fetch_all
@@ -24,14 +24,6 @@ def volume_attention(curr_vol, prev_vol, cap=2.0):
     ratio = curr_vol / prev_vol
     return float(np.clip(ratio, 0, cap) / cap)
 
-#WORK ON THIS FUNCTION
-'''def aggregate(ticker,time_series):
-    #  Σ(alignment_raw × weight) / Σ(weight)
-    alignment_raws 
-    weights = []
-    
-    pass
-'''
 
 '''
 Returns a dictionary with:

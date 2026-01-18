@@ -9,6 +9,7 @@ import AlignmentPanel from '@/components/panels/AlignmentPanel'
 import HeadlinesPanel from '@/components/panels/HeadlinesPanel'
 import AddStockModal from '@/components/modals/AddStockModal'
 import HeadlineDetailsModal from '@/components/modals/HeadlineDetailsModal'
+import MisalignmentMapModal from '@/components/modals/MisalignmentMapModal'
 import { getDashboard, getStocks, refreshStock } from '@/lib/api'
 import type { DashboardData, NewsItem, Stock } from '@/lib/types'
 
@@ -21,6 +22,7 @@ export default function Home() {
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isAddStockOpen, setIsAddStockOpen] = useState(false)
+  const [isMisalignmentOpen, setIsMisalignmentOpen] = useState(false)
   const [selectedHeadline, setSelectedHeadline] = useState<NewsItem | null>(null)
 
   // Get active tickers from stocks
@@ -152,6 +154,7 @@ export default function Home() {
                   color="primary"
                   fullWidth
                   sx={{ maxWidth: { sm: 240 }, borderRadius: 999 }}
+                  onClick={() => setIsMisalignmentOpen(true)}
                 >
                   View Misalignment Map
                 </Button>
@@ -231,6 +234,13 @@ export default function Home() {
       <HeadlineDetailsModal
         headline={selectedHeadline}
         onClose={() => setSelectedHeadline(null)}
+      />
+      <MisalignmentMapModal
+        open={isMisalignmentOpen}
+        onClose={() => setIsMisalignmentOpen(false)}
+        ticker={selectedTicker}
+        period={period}
+        data={data?.daily_data ?? []}
       />
     </>
   )
